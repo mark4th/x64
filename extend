@@ -1,0 +1,3 @@
+#! /bin/bash
+mv x64 x64_old
+printf "fload src/x64.f\n" | ./kernel

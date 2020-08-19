@@ -1,0 +1,5 @@
+# the ONLY reason I am able to debug my kernel is beause HexRays does not suck
+# at implementing debuggers.  worth every damned penny I paid for it
+
+rm -f $1.i64
+/opt/idapro-7.5/ida64 $1
