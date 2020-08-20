@@ -1,0 +1,3 @@
+kernel
+src/kernel.o
+src/kernel.lst
