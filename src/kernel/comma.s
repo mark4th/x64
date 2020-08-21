@@ -30,7 +30,7 @@ code 'allot', allot
 ;       ( n1 --- )
 
 code 'hallot', h_allot
-  add qword [hp_b], rbx      ; add n1 to head space pointer
+  add qword [hp_b], rbx     ; add n1 to head space pointer
   apop rbx
   next
 

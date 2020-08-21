@@ -15,7 +15,7 @@
 ;       ( --- a1 )
 
 code 'here', here
-  apush rbx                  ; save top of stack cache
+  apush rbx                 ; save top of stack cache
   mov rbx, qword [dp_b]     ; return dp
   next
 

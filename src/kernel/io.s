@@ -3,7 +3,7 @@
 
 ; ------------------------------------------------------------------------
 
-  _defer_ 'emit', emit, p_emit
+  _defer_ 'emit', emit, p_utf8
   _defer_ 'key', key, p_key
 
 ; ------------------------------------------------------------------------
@@ -15,6 +15,8 @@
   _var_ '#line', num_line, 0     ; how far down the screen we are
 
   _var_ 'fdout', fd_out,   1     ; defaults file descriptor for emit
+
+  _var_ 'utf8c', utf8c, 0        ; utf8 character sequence
 
 ; ------------------------------------------------------------------------
 ; these constants are patched by an extension to reflect reality
@@ -38,6 +40,114 @@ colon '(emit)', p_emit
   xt p_incr_to              ; #out++
   dq num_out_b
   exit
+
+; ------------------------------------------------------------------------
+; emit compiled utf8 character
+
+u8_emit:
+  mov rdi, [fd_out_b]       ; normally stdout
+  mov rsi, utf8c_b          ; point at utf8 characters
+  mov rax, 1                ; syscall number
+  syscall
+  inc qword [num_out_b]
+  apop rbx
+  ret
+
+; ------------------------------------------------------------------------
+
+; rbx = code-point
+; rcx = shift
+; rsi = mask1
+; rdi = mask2
+
+u8:
+  mov rbp, rbx
+  shr rbx, cl
+  and rbx, rsi
+  or rbx, rdi
+  mov byte [utf8c_b + rdx], bl
+  inc rdx
+  mov rbx, rbp
+  ret
+
+; ------------------------------------------------------------------------
+
+utf_800:
+  mov rcx, 6
+  mov rsi, 0x1f
+  mov rdi, 0xc0
+  call u8
+
+  mov rcx, 0
+  mov rsi, 0x3f
+  mov rdi, 0x80
+  call u8
+  jmp u8_emit
+
+; ------------------------------------------------------------------------
+
+utf_10000:
+  mov rcx, 12
+  mov rsi, 0x0f
+  mov rdi, 0xe0
+  call u8
+
+  mov rcx, 6
+  mov rsi, 0x3f
+  mov rdi, 0x80
+  call u8
+
+  mov rcx, 0
+  mov rsi, 0x3f
+  mov rdi, 0x80
+  call u8
+
+  jmp u8_emit
+
+; ------------------------------------------------------------------------
+
+utf_110000:
+  mov rcx, 18
+  mov rsi, 7
+  mov rdi, 0xf0
+  call u8
+
+  mov rcx, 12
+  mov rsi, 0x3f
+  mov rdi, 0x80
+  call u8
+
+  mov rcx, 6
+  mov rsi, 0x3f
+  mov rdi, 0x80
+  call u8
+
+  mov rcx, 0
+  mov rsi, 0x3f
+  mov rdi, 0x80
+  call u8
+
+  jmp u8_emit
+
+; ------------------------------------------------------------------------
+
+;       ( code-point -- )
+
+code '(utf8)', p_utf8
+  cmp rbx, 0x7f
+  jl p_emit
+
+  mov rdx, 0
+  mov [utf8c_b], rdx
+
+  cmp rbx, 0x800
+  jl utf_800
+  cmp rbx, 0x10000
+  jl utf_10000
+  cmp rbx, 0x110000
+  jl utf_110000
+  pop rbx
+  next
 
 ; ------------------------------------------------------------------------
 ; uses qkfd pollfd structure to poll standardin

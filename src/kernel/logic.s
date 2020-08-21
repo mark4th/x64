@@ -79,7 +79,8 @@ code '0<', z_less
 
 code '0>', z_greater
   neg rbx                   ; negate n1
-  jmp short z_less          ; and get sign
+  sar rbx, byte 63
+  next
 
 ; ------------------------------------------------------------------------
 ; return true if n1 is posative

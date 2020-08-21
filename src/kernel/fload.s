@@ -61,8 +61,6 @@ fl_pop:
 ; ------------------------------------------------------------------------
 ; list of items to pop off fload stack on completion of a nested fload
 
-  _no_name_
-
 pop_list:
   call do_variable
 
@@ -78,8 +76,6 @@ pop_list:
   dq 0
 
 ; ------------------------------------------------------------------------
-
-  _no_name_
 
 restore_state:
   call nest
@@ -105,8 +101,6 @@ restore_state:
 ; ------------------------------------------------------------------------
 ; fload completed, restore previous fload state
 
-  _no_name_
-
 end_fload:
   call nest
 
@@ -126,8 +120,6 @@ end_fload:
 
 ; ------------------------------------------------------------------------
 ; aborts an fload - leaves line# of error intact
-
-  _no_name_
 
 abort_fload:
   xt line_num               ; save line number we aborted on so endfload
@@ -173,8 +165,6 @@ colon 'fmmap', f_mmap
 ; ------------------------------------------------------------------------
 ; list of items to save when nesting floads
 
-  _no_name_
-
 push_list:
   call do_variable
 
@@ -191,8 +181,6 @@ push_list:
 
 ; ------------------------------------------------------------------------
 ; push all above listed items onto fload stack
-
-  _no_name_
 
 save_state:
   call nest
@@ -217,8 +205,6 @@ save_state:
 
 ; ------------------------------------------------------------------------
 ; init for interpreting of next line of memory mapped file being floaded
-
-  _no_name_
 
 colon 'flrefill', flrefill
   xt fl_addr                ; did we interpret the entire file?

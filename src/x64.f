@@ -26,6 +26,19 @@
   fload src/ext/loops.f         \ * loop and branch compilation words
   fload src/ext/variable.f      \ * variable creating words etc
   fload src/ext/number.f        \ * pictured number output
+
+  \ ----------------------------------------------------------------------
+  \ displays offending line number during an fload
+
+  \ any errors in any of the above floads wont have
+  \ their line number echo'd.   everything below will
+
+  : (.line#)
+    floads 0= ?exit
+    ." Line Number " line# . ;
+   ' (.line#) is .line#
+
+  \ ----------------------------------------------------------------------
   fload src/ext/header.f        \ * headerless word creation
   fload src/ext/vocabs.f        \ *
   fload src/ext/struct.f        \ * structure definition words
@@ -51,17 +64,6 @@
   [cr]
 
   behead forth definitions
-
-\ ------------------------------------------------------------------------
-\ displays offending line number during an fload
-
-\ any errors in any of the above floads wont have their line numbers
-\ echo'd.  we could move this up to just below the fload for number.f tho
-
-  : (.line#)
-    floads 0= ?exit
-    ." Line Number " line# . ;
-   ' (.line#) is .line#
 
 \ ------------------------------------------------------------------------
 \ memory manager
@@ -116,7 +118,6 @@
 \ ------------------------------------------------------------------------
 \ the above modules have not been beheaded yet
 
-
   .( loading text-ui:  )
 
   fload src/ext/tui/tui.f       \ + text user interface (aka curses)
@@ -151,35 +152,7 @@
   fload src/ext/hello.f         \ - nice signon message
   fload src/ext/status.f        \ - status line display
   fload src/ext/tail.f          \ - default args handler
-
-\ ------------------------------------------------------------------------
-\ decompiler
-
-  \ .( loading decompiler: )
-
-  \ fload src/ext/see/utils.f     \ - utility words
-  \ fload src/ext/see/disp.f      \ - general word name display
-  \ fload src/ext/see/cond.f      \ - conditionals, loops name display
-  \ fload src/ext/see/see.f       \ - see 'see etc
-
-  \ forth definitions
-
-\ ------------------------------------------------------------------------
-\ the debugger
-
-\  .( loading debugger: )
-
-\  fload src/ext/debug/utils.f
-\  fload src/ext/debug/init.f    \ - debug window initializations
-\  fload src/ext/debug/stackdisp.f
-\  fload src/ext/debug/window.f  \ - user interface display
-\  fload src/ext/debug/see.f     \ - wrapper for decompiler extension
-\  fload src/ext/debug/keys.f    \ - moving around without execution
-\  fload src/ext/debug/debug.f   \ - main debug module
-
-\  cr
-
-\  forth definitions behead      \ only comment out if not including see
+  fload src/ext/utf8.f            \ + utf8 emit
 
 \ ------------------------------------------------------------------------
 
@@ -188,7 +161,7 @@
 \ ------------------------------------------------------------------------
 \ custom initialization
 
-  fload src/ext/init.f          \ + interpret ~/.x4.rcf
+\  fload src/ext/init.f          \ + interpret ~/.x4.rcf
 
 \ ------------------------------------------------------------------------
 \ save out extended forth - does not return - implied bye

@@ -1,4 +1,4 @@
-\ term.f        - x4 termifo loading
+\ term.f   - open terminfo file for reading
 \ ------------------------------------------------------------------------
 
   .( term.f )
@@ -14,41 +14,75 @@
   vocabulary terminal terminal definitions
 
 \ ------------------------------------------------------------------------
-\ the below path assumes your distribution follows the fhs
 
-  <headers
-
-  create info-file
-    ," /usr/share/terminfo/"
-  here ,' x/'
-  here dup 10 allot 10 erase  \ space filled in with term name
-
-  var info-name
-  var info-letter
-
-  0 var wide
-
-\ ------------------------------------------------------------------------
-
-  create env_term  ," TERM"
-
-\ ------------------------------------------------------------------------
-
-  0 var terminfo            \ address of terminfo data
-  0 var tsize               \ size of memory mapping
-
-\ we never actually unmap the terminfo file so we dont realy need to
-\ remember the size of the mapping
+  0 var t-size              \ size of terminfo memory mapping
+  0 var terminfo            \ address of terminfo memory mapping
 
 \ ------------------------------------------------------------------------
 \ escape sequences compiled to this buffer
-
-  headers>
 
   0 var $buffer             \ output string compile buffer
   0 var #$buffer            \ number of characters compiled to $buffer
 
   <headers
+
+\ ------------------------------------------------------------------------
+
+  create ti-path 64 allot
+  create TERM    64 allot
+  0 var t-letter           \ first letter of $TERM
+  create env-term  ," TERM"
+
+  create p1 ," /usr/share/terminfo/./"
+  create p3 ," /lib/terminfo/./"
+  create p2 ," /etc/terminfo/./"
+  create p4 ," ~/terminfo/./"
+
+create paths
+  p1 , p2 , p3 , p4 ,
+
+\ ------------------------------------------------------------------------
+
+: map-info   ( fd --- )
+  dup 1 dup fmmap
+  !> t-size !> terminfo
+  fclose ;
+
+\ ------------------------------------------------------------------------
+
+: (open-terminfo)     ( --- fd t | f )
+  4 0
+  do
+    ti-path 64 erase
+    paths i []@ count -1 /string
+    ti-path swap cmove
+
+    t-letter ti-path count + 2- c!
+
+    TERM count ti-path $+
+
+    $22 0 ti-path fopen
+    dup -1 <>
+    if
+      map-info
+      true undo exit
+    then
+  loop
+  false ;
+
+\ ------------------------------------------------------------------------
+
+: open-terminfo
+  env-term getenv           \ ( a1 n1 f1 --- )
+  if
+    over c@ !> t-letter
+    dup TERM c!
+    TERM 1+ swap cmove
+    (open-terminfo)
+  else
+    ." Unknown $TERM: " TERM count type cr
+    bye
+  then ;
 
 \ ------------------------------------------------------------------------
 \ pointers to each section within terminfo file
@@ -60,6 +94,7 @@
   0 var t-numbers           \ numbers section
   0 var t-strings           \ string section (offsets within following)
   0 var t-table             \ string table
+  0 var wide                \ true if using new format terminfo
 
 \ -----------------------------------------------------------------------
 \ various buffers used when parsing escape sequence format strings
@@ -81,32 +116,6 @@
   defer .$buffer            \ write whole output buffer (to display?)
 
   <headers
-
-\ ------------------------------------------------------------------------
-\ create full path to terminfo file
-
-: (get-info)    ( a1 n1 ---  )
-  over c@ info-letter c!    \ first letter of term name = part of path
-  dup info-file c@ + 2+     \ compute total length of info file path
-  info-file c!              \ length of path and file name
-  info-name swap cmove ;    \ append name to path
-
-\ ------------------------------------------------------------------------
-\ read terminfo file (memory map it)
-
-: read-info
-  0 info-file fopen         \ open terminfo file for read
-  dup -1 =
-  if
-    ." Unknown TERM: "
-    info-file count type    \ display unknown terminfo file
-    bye                     \ and get out
-  then
-
-  dup 1 dup fmmap           \ map shared and prot read
-
-  !> tsize !> terminfo
-  fclose ;                  \ close the file but keep the mapping
 
 \ ------------------------------------------------------------------------
 \ allocate a buffer of n1 bytes in size
@@ -180,16 +189,10 @@ struct: header
 : get-info
   defers default            \ add to default init chain
 
-  env_term getenv           \ did anyone bother to set $term env ?
-  if
-    (get-info) read-info    \ create full path to terminfo file and read
-    valid?                  \ test sanity of terminfo file
-    alloc-buffers           \ allocate buffers
-    init-pointers           \ initialize pointers to each section
-  else
-    ." Terminfo - I'm confused (or you are)"
-    bye
-  then ;
+  open-terminfo valid?      \ test sanity of terminfo file
+
+  alloc-buffers             \ allocate buffers
+  init-pointers ;           \ initialize pointers to each section
 
 \ ------------------------------------------------------------------------
 \ store n1 parameters in paramter table

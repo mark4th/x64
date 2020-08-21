@@ -98,8 +98,6 @@ colon '(num)', p_num
 ; e.g.       'x'
 ;           -'y'
 
-  _no_name_
-
 chr_num:
   call nest
   xt over                   ; must have closing tick
@@ -125,8 +123,6 @@ chr_num:
 ; e.g.       %1101
 ;           -%1001
 
-  _no_name_
-
 bin_num:
   call nest
   xt one
@@ -141,8 +137,6 @@ bin_num:
 
 ;e.g.       \023
 ;          -\034
-
-  _no_name_
 
 oct_num:
   call nest
@@ -159,8 +153,6 @@ oct_num:
 ; e.g.       $65
 ;           -$48
 
-  _no_name_
-
 hex_num:
   call nest
   xt one
@@ -171,8 +163,6 @@ hex_num:
 
 ; ------------------------------------------------------------------------
 ; default case, no base prefix specified, use current default base
-
-  _no_name_
 
 def_num:        ; ( f1 a1 n1 --- )
   call nest

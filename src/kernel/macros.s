@@ -62,54 +62,63 @@
 ; push item onto arg (parameter) stack or return stack
 
 %macro apush 1
-  sub SP, byte CELL
-  mov qword [SP], %1
+  xchg SP, rsp
+  push %1
+  xchg SP, rsp
 %endmacro
 
 %macro apush2 2
-  sub SP, byte 2* CELL
-  mov qword [SP], %2
-  mov qword [SP + CELL], %1
+  xchg SP, rsp
+  push %1
+  push %2
+  xchg SP, rsp
 %endmacro
 
 %macro apush3 3
-  sub SP, byte 3* CELL
-  mov qword [SP], %3
-  mov qword [SP + CELL], %2
-  mov qword [SP + 2* CELL], %1
+  xchg SP, rsp
+  push %1
+  push %2
+  push %3
+  xchg SP, rsp
 %endmacro
 
 %macro apop 1
-  mov %1, qword [SP]
-  add SP, byte CELL
+  xchg SP, rsp
+  pop %1
+  xchg SP, rsp
 %endmacro
 
 %macro apop2 2
-  mov %1, qword [SP]
-  mov %2, qword [SP + CELL]
-  add SP, byte CELL *2
+  xchg SP, rsp
+  pop %1
+  pop %2
+  xchg SP, rsp
 %endmacro
 
 %macro rpush 1
-  sub RP, byte CELL
-  mov qword [RP], %1
+  xchg RP, rsp
+  push %1
+  xchg RP, rsp
 %endmacro
 
 %macro rpush2 2
-  sub RP, byte CELL * 2
-  mov qword [RP + CELL], %1
-  mov qword [RP], %2
+  xchg RP, rsp
+  push %1
+  push %2
+  xchg RP, rsp
 %endmacro
 
 %macro rpop 1
-  mov %1, qword [RP]
-  add RP, byte CELL
+  xchg RP, rsp
+  pop %1
+  xchg RP, rsp
 %endmacro
 
 %macro rpop2 2
-  mov %1, qword [RP]
-  mov %2, qword [RP + CELL]
-  add RP, byte CELL *2
+  xchg RP, rsp
+  pop %1
+  pop %2
+  xchg RP, rsp
 %endmacro
 
 ; ------------------------------------------------------------------------
@@ -131,13 +140,6 @@
 %macro literal 1
   apush rbx
   mov rbx, %1
-%endmacro
-
-; ------------------------------------------------------------------------
-; flag following word as headerless
-
-%macro _no_name_ 0
-  dq 0                      ; null nfa pointer at cfa -4
 %endmacro
 
 ; ------------------------------------------------------------------------

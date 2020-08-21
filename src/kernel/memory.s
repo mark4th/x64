@@ -399,7 +399,7 @@ code "%?'", z_q_tick
   apush rbx
   mov rax, qword[rsp]       ; return address contains address of body
   mov rbx, [rax]            ; fetch contents of body
-mov rbx, [rbx]
+  mov rbx, [rbx]
   jmp p_store_to.L1
 
 ; ------------------------------------------------------------------------
@@ -479,7 +479,11 @@ code 'cmove>', cmove_to
   dec rsi
 
   std                       ; moving backwards
-  rep movsb                 ; move data
+  shr rcx, 2
+  rep movsd
+  mov rcx, rbx
+  and rcx, 3
+  rep movsb
   cld                       ; restore default direction
 
 .L1:

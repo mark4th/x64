@@ -155,7 +155,7 @@ code '(+loop)', p_p_loop
 ;       ( end start --- )
 
 code '(do)', p_do
-  apop rdx                  ; get loop start index
+  apop rdx                  ; get loop end index
 .L0:
   mov rax, qword [rsp]      ; get address of loop exit point
   movzx ecx, word [rax]
@@ -163,13 +163,14 @@ code '(do)', p_do
 
   add qword [rsp], byte 2   ; advance IP past it
 
-  rpush rax                 ; put exit point on r stack
+  rpush rax                 ; put exit point on stack
 
   mov rbp, 0x8000000000000000
   add rdx, rbp              ; fudge loop index
   sub rbx, rdx
 
-  rpush2 rdx, rbx           ; push fudged loop indicies onto return stack
+  rpush rdx
+  rpush rbx           ; push fudged loop indicies onto return stack
 
   apop rbx                  ; cache new top of stack iten
   next
@@ -267,9 +268,8 @@ code 'i', i
   xor rax, rax              ; calculate i from r stack [+ 0] and [+ 4]
 .L0:
   apush rbx                 ; flush cached top of stack
-  lea rax, [rax + RP]       ; point eax at requested index/limit
-  mov rbx, qword [rax]      ; get current index (fudged)
-  add rbx, qword [rax + CELL] ; defudge by adding in fudged limit
+  mov rbx, qword [rax + RP]      ; get current index (fudged)
+  add rbx, qword [rax + RP + CELL] ; defudge by adding in fudged limit
   next
 
 ; ------------------------------------------------------------------------

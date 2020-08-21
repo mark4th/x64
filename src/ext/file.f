@@ -9,7 +9,7 @@
 : fname>pad     ( a1 --- pad )
   count dup>r               \ get addr and len of filename
   pad swap cmove
-  r> pad + off              \ make filename asciiz
+  0 r> pad + c!             \ make filename asciiz
   pad ;
 
 \ ------------------------------------------------------------------------

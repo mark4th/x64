@@ -75,7 +75,7 @@ code '?exit', q_exit
   mov rax, rbx              ; keep f1 so we can test after pop
   apop rbx                  ; cache new tos (test result retained in psw)
   or rax, rax
-  jnz _exit                  ; 0 = false, non 0 = not false, -1 = true :)
+  jnz _exit                 ; 0 = false, non 0 = not false, -1 = true :)
   next
 
 ; ------------------------------------------------------------------------
@@ -88,11 +88,9 @@ code '?exit', q_exit
 code 'exec:', exec_c
   pop rax                   ; point to array of xt's following exec:
 
-  mov rdx, rbx              ; 5 bytes per xt
-  shl rbx, 2
-  add rbx, rdx
+  lea rbx, [rbx + 4* rbx]
+  add rbx, rax              ; point to xt to be executed
 
-  lea rbx, [rax + rbx]      ; point to xt to be executed
   call xt_fetch             ; conert xt to absolute address
   push qword [RP]           ; unnest from word calling exec: now
   add RP, byte CELL
@@ -168,12 +166,13 @@ code 'execute', execute
 ;        true abort" crash!: ;
 
 colon 'crash', crash
-  sub rax, byte 13
-  mov rbx, [rax]
+  apush rbx
+  mov rbx, [rax - 13]
   xt count
   xt lex_mask
-  xt type;
+  xt type
   xt space
+
   xt true
   xt p_abort_q
   db 6, 'crash!'

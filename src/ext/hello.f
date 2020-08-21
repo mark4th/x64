@@ -5,28 +5,77 @@
 
 \ ------------------------------------------------------------------------
 
-\  <headers
-
-  defer init-hello
+  <headers
 
   0 var dohello
 
-  screen: hscr              \ hello screen
-  window: hwin              \ hello window
+  0 var hx                  \ x and y of top left of hello
+  0 var hy                  \ window
 
 \ ------------------------------------------------------------------------
-\ the hello window frame
+\ the hello window frame in utf8
 
-create win-dat
- ,'  lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk '
- ,' lj                               mk'
- ,' x                                 x'
- ,' x                                 x'
- ,' x                                 x'
- ,' x                                 x'
- ,' mk                               lj'
- ,'  mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj '
+create frame
+  1 c, 1 c, $25ab w, 1 c, $2554 w, 31 c, $2550 w, 1 c, $2557 w, 1 c, $25ab w, 0 c,
+  1 c, 1 c, $250c w, 1 c, $255c w, 31 c, $0020 w, 1 c, $255a w, 1 c, $2557 w, 0 c,
+  1 c, 1 c, $2502 w,               33 c, $0020 w,               1 c, $2551 w, 0 c,
+  1 c, 1 c, $2502 w,               33 c, $0020 w,               1 c, $2551 w, 0 c,
+  1 c, 1 c, $2502 w,               33 c, $0020 w,               1 c, $2551 w, 0 c,
+  1 c, 1 c, $2502 w,               33 c, $0020 w,               1 c, $2551 w, 0 c,
+  1 c, 1 c, $2514 w, 1 c, $2510 w, 31 c, $0020 w, 1 c, $2552 w, 1 c, $255d w, 0 c,
+  1 c, 1 c, $25ab w, 1 c, $2514 w, 31 c, $2500 w, 1 c, $2518 w, 1 c, $25ab w, 0 c,
+  0 c,
 
+\ ------------------------------------------------------------------------
+
+: .frame-char   ( addr count --- )
+  >r wcount
+  dup $20 =
+  if
+    white blue
+  else
+    dup $25ab =
+    if
+      ltblue
+    else
+      cyan
+    then
+    black
+  then
+  >bg >fg
+
+  r>
+  for
+    dup emit
+  nxt
+  drop ;
+
+\ ------------------------------------------------------------------------
+
+: .frame-row  ( addr repeat --- )
+  0 -rot
+  for
+    nip dup>r
+    begin
+      count ?dup
+    while
+      .frame-char
+    repeat
+    r>
+  nxt
+  drop ;
+
+\ ------------------------------------------------------------------------
+
+: .frame
+  frame
+  begin
+    count ?dup
+  while
+     2>r 2dup at 2r>
+    .frame-row 2>r 1+ 2r>
+  repeat
+  3drop black >bg ;
 
 \ ------------------------------------------------------------------------
 \ get x4 version string
@@ -43,99 +92,53 @@ create win-dat
 \ ------------------------------------------------------------------------
 \ display x4 version
 
-\  headers>
+  headers>
 
 : .version
   (.version) type ;
 
 \ ------------------------------------------------------------------------
-\ display hello window frame
-
-\  <headers
-
-: .frame
-  0 0 hwin win-at
-  win-dat [ 35 8 * ]#
-  for
-    count dup bl =
-    if
-      white hwin win-cx@ 0 34 either
-      ?: black blue
-      >color hwin win-color!
-    else
-      ltblue black >color hwin win-color!
-    then
-    hwin wemit
-  nxt
-  drop ;
-
-\ ------------------------------------------------------------------------
 \ initialize hello screen and window
 
-: (init-hello)
-  cols rows hscr (screen:) drop
-  35 8 hwin (window:)      drop
+: .hello
+  cols 2/ [ 36 2/ ]# -
+  !> hx 7 !> hy
 
-  hscr scr-clr
-  hscr hwin win-attach
-  hwin win-clr
+  hy hx .frame
+  2 +!> hy
 
-  cols 2/ 18 - 6 hwin winpos!
+  hy hx [ 34 2/ 6 - ]# + at
+  ltwhite >fg blue >bg
+  ." x64: "
+  >bold >ul (.version) type <ul
 
-  hwin win>alt hwin >locked
+  hy 1+ hx [ 34 2/ 15 - ]# + at
+  cyan >fg  ." Sub-Threaded "
+  ltcyan >fg ." 64bit "
+  cyan >fg ." Linux Forth"
 
-  .frame
+  hy 2+ hx [ 34 2/ 27 2/ - ]# + at
+  green >fg ." Using no external libraries"
 
-  2 12 hwin win-at
-  ltwhite blue >color
-  hwin win-color!
-  hwin win<bold
-  hwin win<alt
-  hwin win" x64: "
+  hy 3 + hx [ 34 2/ 20 2/ - ]# + at
+  >bold ltblue >fg ." by "
 
-  hwin win>bold
-  hwin win>ul
-  hwin (.version) wtype
-  hwin win<bold
-  hwin win<ul
-
-  cyan hwin win>fg
-  3 2 hwin win-at
-  hwin win>bold
-  hwin win"  Sub-Theaded "
-  cyan hwin win>fg
-  hwin win" 64bit "
-  hwin win" Linux "
-  ltcyan hwin win>fg
-  hwin win" Forth"
-
-  4 4 hwin win-at
-  hwin win" Using no external libraries"
-  5 7 hwin win-at
-  hwin win>bold
-  ltblue hwin win>fg
-  hwin win" by Mark I Manning IV" ;
+  white >fg ." Mark I Manning IV" ;
 
 \ ------------------------------------------------------------------------
 
-: re-hello hscr scr-refresh ;
-
-\ ------------------------------------------------------------------------
-
-\  headers>
+  headers>
 
 : hello
-  clear init-hello
-  ['] re-hello is init-hello
-  hscr scr-clr
-  hscr .screen
+  clear .hello
   white >fg
+  black >bg
   rows 10 - 0 at ;
 
 \ ------------------------------------------------------------------------
 \ display x4s active time at exit blah blah
 
-\  <headers
+  <headers
 
 : exitelapsed
   defers atexit
@@ -150,12 +153,11 @@ create win-dat
   defers default
   timer-reset               \ start timer for how long x4 is active
   in-tty not ?exit
-  ['] (init-hello) is init-hello
   on> dohello               \ enable "hello"
   hello ;                   \ run hello
 
 \ ------------------------------------------------------------------------
 
- \ behead
+  behead
 
 \ ========================================================================

@@ -124,10 +124,12 @@ colon 'literal', literal_
   mov rax, rbx              ; assemble 0xbb NN NN NN NN
   shr rax, byte 32
   jne .L1
+
   literal 0xbb
   xt c_comma
   xt s_comma
   exit
+
 .L1:
   literal 0xbb48            ; assemble 0x48 0xbb NN NN NN NN NN NN NN NN
   xt w_comma
@@ -138,7 +140,7 @@ colon 'literal', literal_
 ; shorthand for '] literal'
 
 ;    : ]#
-;         ] literal ; immediate
+;         ] literal ;
 
 colon ']#', r_b_sharp
   xt r_bracket
@@ -214,6 +216,7 @@ colon ';code', s_code
   xt r_to
   xt branch
   bv s_uses.L1
+  exit
 
 ; ------------------------------------------------------------------------
 ; define run time action of a word being compiled
@@ -274,10 +277,10 @@ colon 'alias', alias
   xt do_if
   bv .L1
   xt immediate              ; make alias immediate too
+  xt do_then
 .L1:
   xt do_then
 .L2:
-  xt do_then
   literal ALIAS             ; mark this as an alias
   xt last                   ; see header relocation code
   xt c_set
