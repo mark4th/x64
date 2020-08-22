@@ -21,11 +21,11 @@
 
   #out cols >
   if
-    cols 1- #out !
+    cols 1- !> #out
   then
   #line rows >
   if
-    rows 1- #line !
+    rows 1- !> #line
   then  ;
 
 \ ------------------------------------------------------------------------
