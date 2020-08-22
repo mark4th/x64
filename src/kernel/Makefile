@@ -5,7 +5,7 @@ debug    = -g
 flags = $(debug) $(list) -felf64
 
 kernel: kernel.o
-	@ld kernel.ld ../kernel.o -o ../../kernel
+	@ld -T kernel.ld ../kernel.o -o ../../kernel
 	@strip -R .comment ../../kernel
 
 kernel.o: x64.asm

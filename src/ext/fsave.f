@@ -2,7 +2,7 @@
 \ ------------------------------------------------------------------------
 
   .( loading fsave.f ) [cr]
-
++headers
 \ ------------------------------------------------------------------------
 
   compiler definitions
@@ -142,10 +142,9 @@ create $table
   ,' .bss' 0 c,             \ 7
   ,' .shstrtab' 0 c,        \ 12
 
-  here $table - const st_len
+  here $table - const st-len
 
 \ ------------------------------------------------------------------------
-\ decompiler needs this too
 
   origin $7fff not and const ELF0
 
@@ -188,10 +187,18 @@ create identity
   0 var sh-addr
 
 \ ------------------------------------------------------------------------
+\ write string section
+
+: $sec!         ( --- )
+  $table ss-addr
+  st-len cmove ;
+
+\ ------------------------------------------------------------------------
 \ initilize elf headers at start of process address space
 
 : ehdr!         ( --- )
   identity ELF0 16 cmove    \ copy elf identity into elf header
+
   ELF0 >r
 
   ET_EXEC    r@ e_type    w!
@@ -202,7 +209,8 @@ create identity
 
   hhere                     \ address of start of string section
   $1000 + -$1000 and
-  dup !> ss-addr st_len +   \ remember str section address
+
+  dup !> ss-addr st-len +   \ remember str section address
   dup !> sh-addr            \ remember section headers addres
 
   ELF0 -     r@ e_shoff     !
@@ -220,7 +228,6 @@ create identity
 
 : phdr!         ( --- )
   ELF0 elf_header +         \ get address of program headers
-  dup prg_header 2* erase   \ start fresh
 
   >r                        \ .text
 
@@ -247,53 +254,59 @@ create identity
   $1000            r> p_align ! ;
 
 \ ------------------------------------------------------------------------
-\ write string section
-
-: $sec!         ( --- )
-  $table ss-addr st_len cmove ;
-
-\ ------------------------------------------------------------------------
 \ write all section headers
 
 : shdr!        ( --- )
   sh-addr                   \ get address for section headers
-  dup sec_header erase      \ first section header is always null
-  sec_header + >r           \ point to second secton header
+
+  >r                        \ dummy section header
+
+  0               r@ sh_name       s!
+  0               r@ sh_type       s!
+  0               r@ sh_flags      !
+  0               r@ sh_addr       !
+  0               r@ sh_offset     !
+  0               r@ sh_size       !
+  0               r@ sh_link       s!
+  0               r@ sh_info       s!
+  0               r@ sh_addralign  !
+  0               r@ sh_entsize    !
+
+  r> sec_header + >r        \ .text
 
   1               r@ sh_name       s!
   SHT_PROGBITS    r@ sh_type       s!
   SHF_AX          r@ sh_flags      !
   origin          r@ sh_addr       !
   origin ELF0 -   r@ sh_offset     !
-  hhere origin -  r@ sh_size       !
+  ss-addr origin - r@ sh_size      !
   0               r@ sh_link       s!
   0               r@ sh_info       s!
   16              r@ sh_addralign  !
   0               r@ sh_entsize    !
 
-  r> sec_header + >r
+  r> sec_header + >r        \ .bss
 
   7                r@ sh_name        s!
   SHT_NOBITS       r@ sh_type        s!
   SHF_WA           r@ sh_flags       !
   ss-addr          r@ sh_addr        !
   ss-addr ELF0 -   r@ sh_offset      !
-  1MEG
-  ss-addr ELF0 -
+  1MEG ss-addr ELF0 -
   -                r@ sh_size !
   0                r@ sh_link        s!
   0                r@ sh_info        s!
   1                r@ sh_addralign   !
   0                r@ sh_entsize     !
 
-  r> sec_header + >r
+  r> sec_header + >r        \ string table
 
   12              r@ sh_name        s!
   SHT_STRTAB      r@ sh_type        s!
   0               r@ sh_flags       !
   0               r@ sh_addr        !
   ss-addr ELF0 -  r@ sh_offset      !
-  st_len          r@ sh_size        !
+  st-len          r@ sh_size        !
   0               r@ sh_link        s!
   0               r@ sh_info        s!
   1               r@ sh_addralign   !
@@ -340,8 +353,8 @@ create identity
   off> floads               \ these in a wrong state for the target
 
   ehdr!                     \ write elf headers into memory
-  phdr!                     \ write program headers into memory
   $sec!                     \ write string table into memory
+  phdr!                     \ write program headers into memory
   shdr!                     \ write section headers into memory
 
   ((fsave)) ;               \ save out memory :)
@@ -359,6 +372,7 @@ create identity
 
 : turnkey
   here $3ff + -400 and hp ! \ obliterate all of head space
+  here hhere over - erase
   on> turnkeyd              \ target doesn't try to relocate non existent
   (fsave) ;                 \   headers when it loads in !!!
 

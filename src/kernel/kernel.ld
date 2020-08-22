@@ -3,7 +3,9 @@ ENTRY(origin)
 
 SECTIONS
 {
-    . = 0x401000;
+    PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x40000));
+    . = SEGMENT_START("text-segment", 0x4000000) + SIZEOF_HEADERS;
+
     .text : { *(.text) *(headers) }
 
     .bss : ALIGN(1)
